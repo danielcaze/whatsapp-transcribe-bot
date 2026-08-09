@@ -66,3 +66,17 @@ npm test              # roda a suíte de testes (vitest)
 ```
 
 Copie `.dev.vars.example` pra `.dev.vars` e preencha com valores reais pra testar localmente (esse arquivo não vai pro git).
+
+## CI/CD
+
+`.github/workflows/ci-cd.yml` roda em todo push/PR:
+
+- **test**: `npm test` + `tsc --noEmit`.
+- **deploy**: só em push pra `main` e só se `test` passar — publica via `wrangler deploy`.
+
+Pra habilitar o deploy automático, cadastre dois secrets no repositório (**Settings → Secrets and variables → Actions → New repository secret**):
+
+- `CLOUDFLARE_API_TOKEN` — gere em [dash.cloudflare.com](https://dash.cloudflare.com/profile/api-tokens) → **Create Token** → template **Edit Cloudflare Workers**.
+- `CLOUDFLARE_ACCOUNT_ID` — visível na URL do dashboard da Cloudflare, ou rode `npx wrangler whoami`.
+
+Isso é separado dos secrets do Worker (`WHATSAPP_TOKEN` etc, passo 4 acima) — aqueles ficam só no Cloudflare via `wrangler secret put`, não passam pelo GitHub.
