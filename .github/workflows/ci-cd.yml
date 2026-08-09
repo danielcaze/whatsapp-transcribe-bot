@@ -24,6 +24,9 @@ jobs:
     needs: test
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     steps:
       - uses: actions/checkout@v4
 
@@ -34,7 +37,12 @@ jobs:
 
       - run: npm ci
 
-      - uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Sync Worker secrets
+        run: |
+          printf '%s' "${{ secrets.WHATSAPP_TOKEN }}" | npx wrangler secret put WHATSAPP_TOKEN
+          printf '%s' "${{ secrets.WHATSAPP_PHONE_NUMBER_ID }}" | npx wrangler secret put WHATSAPP_PHONE_NUMBER_ID
+          printf '%s' "${{ secrets.WHATSAPP_VERIFY_TOKEN }}" | npx wrangler secret put WHATSAPP_VERIFY_TOKEN
+          printf '%s' "${{ secrets.GROQ_API_KEY }}" | npx wrangler secret put GROQ_API_KEY
+          printf '%s' "${{ vars.ALLOWED_NUMBERS }}" | npx wrangler secret put ALLOWED_NUMBERS
+
+      - run: npx wrangler deploy

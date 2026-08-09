@@ -42,6 +42,10 @@ Isso gera uma URL pública tipo `https://whatsapp-transcribe-bot.SEUUSER.workers
 
 ### 4. Configurar secrets
 
+Pra rodar local (`wrangler dev`), use `.dev.vars` (ver seção **Desenvolvimento local**).
+
+Pra produção, as secrets do Worker são sincronizadas automaticamente pelo CI/CD (ver seção **CI/CD**) a partir dos secrets/vars do GitHub — não precisa rodar `wrangler secret put` manual. Só na primeira vez, ou se quiser testar deploy manual:
+
 ```bash
 npx wrangler secret put WHATSAPP_TOKEN
 npx wrangler secret put WHATSAPP_PHONE_NUMBER_ID
@@ -72,11 +76,14 @@ Copie `.dev.vars.example` pra `.dev.vars` e preencha com valores reais pra testa
 `.github/workflows/ci-cd.yml` roda em todo push/PR:
 
 - **test**: `npm test` + `tsc --noEmit`.
-- **deploy**: só em push pra `main` e só se `test` passar — publica via `wrangler deploy`.
+- **deploy**: só em push pra `main` e só se `test` passar — sincroniza as secrets do Worker e publica via `wrangler deploy`. Assim, mudar um valor no GitHub e dar merge em `main` já propaga pro Cloudflare, sem passo manual.
 
-Pra habilitar o deploy automático, cadastre dois secrets no repositório (**Settings → Secrets and variables → Actions → New repository secret**):
+Cadastre em **Settings → Secrets and variables → Actions** do repositório:
 
+**Secrets** (aba *Secrets*, valores sensíveis):
 - `CLOUDFLARE_API_TOKEN` — gere em [dash.cloudflare.com](https://dash.cloudflare.com/profile/api-tokens) → **Create Token** → template **Edit Cloudflare Workers**.
 - `CLOUDFLARE_ACCOUNT_ID` — visível na URL do dashboard da Cloudflare, ou rode `npx wrangler whoami`.
+- `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_VERIFY_TOKEN`, `GROQ_API_KEY` — mesmos valores do passo 4.
 
-Isso é separado dos secrets do Worker (`WHATSAPP_TOKEN` etc, passo 4 acima) — aqueles ficam só no Cloudflare via `wrangler secret put`, não passam pelo GitHub.
+**Variables** (aba *Variables*, não-sensível):
+- `ALLOWED_NUMBERS` — ex: `5511999999999,5511888888888` (formato E.164, sem `+`). Não é segredo (só números de telefone), por isso fica separado das secrets.
